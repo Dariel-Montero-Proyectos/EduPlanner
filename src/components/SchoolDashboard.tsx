@@ -54,7 +54,7 @@ export function SchoolDashboard({ activeSection }: SchoolDashboardProps) {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-academic font-bold text-academic-dark">
-            ¡Tu Panel Escolar! 📚
+            ¡Tu Panel Colegial! 📚
           </h1>
           <p className="text-academic-muted">
             Semana del {formatDate(currentWeek)} al {formatDate(weekEnd)}
