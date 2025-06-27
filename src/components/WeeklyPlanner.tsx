@@ -6,8 +6,34 @@ import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { TaskCard } from './TaskCard';
 import { AddTaskForm } from './AddTaskForm';
-import { getWeekStart, getWeekEnd, formatDate } from '@/utils/dateUtils';
+import { formatDate } from '@/utils/dateUtils';
 import { Task } from '@/types';
+
+// CORRECCIÓN: Función getWeekStart mejorada
+const getWeekStart = (date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  // Ajuste para que el lunes sea el inicio de la semana
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+};
+
+// CORRECCIÓN: Función getWeekEnd mejorada
+const getWeekEnd = (weekStart) => {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+  return weekEnd;
+};
+
+// CORRECCIÓN: Función para comparar fechas del mismo día
+const isSameDay = (date1, date2) => {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+};
 
 export function WeeklyPlanner() {
   const { tasks, addTask, toggleComplete, deleteTask } = useTasks();
@@ -23,35 +49,37 @@ export function WeeklyPlanner() {
   const goToPreviousWeek = () => {
     const newWeek = new Date(currentWeek);
     newWeek.setDate(newWeek.getDate() - 7);
-    setCurrentWeek(newWeek);
+    setCurrentWeek(getWeekStart(newWeek)); // CORRECCIÓN: Usar getWeekStart
   };
 
   const goToNextWeek = () => {
     const newWeek = new Date(currentWeek);
     newWeek.setDate(newWeek.getDate() + 7);
-    setCurrentWeek(newWeek);
+    setCurrentWeek(getWeekStart(newWeek)); // CORRECCIÓN: Usar getWeekStart
   };
 
   const goToCurrentWeek = () => {
     setCurrentWeek(getWeekStart(new Date()));
   };
 
-  // Group tasks by day
+  // CORRECCIÓN: Group tasks by day con comparación mejorada
   const tasksByDay = () => {
     const days = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(currentWeek);
       day.setDate(day.getDate() + i);
+      day.setHours(0, 0, 0, 0); // Normalizar hora
       
       const dayTasks = weekTasks.filter(task => {
         const taskDate = new Date(task.dueDate);
-        return taskDate.toDateString() === day.toDateString();
+        taskDate.setHours(0, 0, 0, 0); // Normalizar hora
+        return isSameDay(taskDate, day); // CORRECCIÓN: Usar isSameDay
       });
 
       days.push({
         date: day,
         tasks: dayTasks,
-        isToday: day.toDateString() === new Date().toDateString()
+        isToday: isSameDay(day, new Date()) // CORRECCIÓN: Usar isSameDay
       });
     }
     return days;
@@ -125,7 +153,6 @@ export function WeeklyPlanner() {
         </div>
       )}
 
-      {/* ==== MEJORA: DISEÑO RESPONSIVO PARA TAREAS ==== */}
       {/* Weekly Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4">
         {tasksByDay().map((day, index) => (
